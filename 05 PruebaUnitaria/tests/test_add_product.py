@@ -1,4 +1,3 @@
-# archivo: test_login.py
 import time
 import unittest
 from selenium import webdriver
@@ -8,14 +7,18 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-class TestLogin(unittest.TestCase):
+from pages.products_page import ProductsPage
+
+
+class TestAddProduct(unittest.TestCase):
 
     def setUp(self): #Se ejecuta antes de cada función
         self.config_options()
         self.driver = webdriver.Chrome(options=self.options)
         self.driver.get("https://www.saucedemo.com/")
-        #self.driver.maximize_window()
+        self.driver.maximize_window()
         self.login_page = LoginPage(self.driver)
+        self.products_page = ProductsPage(self.driver)
 
     def config_options(self):
         self.options = webdriver.ChromeOptions()
@@ -24,35 +27,28 @@ class TestLogin(unittest.TestCase):
         }
         self.options.add_experimental_option("prefs", prefs)
 
-    def test_login_valido(self): #Test de login exitoso
+    def tearDown(self): #Se ejecuta después de cada función
+        time.sleep(0.5)
+        self.driver.quit()
+
+    def test_add_product(self):
+        self.login()
+        self.products_page.wait_until_loaded()
+        # Agregar productos específicos
+        self.products_page.add_multiple_products([
+            "Sauce Labs Backpack"
+        ])
+        # Validar que el carrito tiene 2 productos
+        assert self.products_page.get_cart_count() == 2, "El carrito no tiene los productos esperados"
+        print(f"El carrito tiene {self.products_page.get_cart_count()} productos")
+
+
+    def login(self):
         self.login_page.wait_until_loaded()
         self.login_page.enter_username("standard_user")
         self.login_page.enter_password("secret_sauce")
         self.login_page.click_login()
 
-        time.sleep(2)
-
-        # Espera explícita a que cargue la página de inventario
-        WebDriverWait(self.driver, 5).until(
-            EC.url_contains("inventory.html"))
-
-    def test_login_invalido(self): # Test de login inválido
-        self.login_page.wait_until_loaded()
-        self.login_page.enter_username("usuario_invalido")
-        self.login_page.enter_password("1234")
-        self.login_page.click_login()
-
-        time.sleep(2)
-
-        # Validar mensaje de error
-        WebDriverWait(self.driver, 5).until(
-            EC.visibility_of_element_located((By.CSS_SELECTOR, "h3[data-test='error']")))
-        error = self.login_page.get_error_message()
-        self.assertIn("Epic sadface", error)
-
-    def tearDown(self): #Se ejecuta después de cada función
-        time.sleep(0.5)
-        self.driver.quit()
 
 if __name__ == "__main__": #Solo se ejecuta si el archivo se corre directamente
     unittest.main() #Ejecuta automáticamente todas las funciones que comienzan con test_
