@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Clonar repositorio') {
+            steps {
+                git branch: 'main', url: 'https://github.com/JavierAntunezE/Python_Jenkins.git'
+            }
+        }
+
+        stage('Instalar dependencias') {
+            steps {
+                bat '''
+                python -m pip install --upgrade pip
+                pip install -r "07 Marco pruebas/requirements.txt"
+                '''
+            }
+        }
+
+        stage('Ejecutar pruebas') {
+            steps {
+                script {
+                    bat '''
+                    set PYTHONPATH=%CD%\\07 Marco pruebas
+                    python -m unittest discover -s "07 Marco pruebas/tests" -v
+                    '''
+                }
+            }
+        }
+    }
+}
